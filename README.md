@@ -20,3 +20,4 @@ The project aims to solve the inefficiencies in information and inventory manage
 
 **Why this problem is important:**
 Addressing this problem is crucial because inadequate data and inventory management can lead to declining sales, a damaged reputation, and a loss of credibility. Furthermore, without proper automation, the business risks operational disorganization and a misdirected strategic focus, ultimately hindering its growth.
+
