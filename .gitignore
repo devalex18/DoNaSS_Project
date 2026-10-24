@@ -1,0 +1,16 @@
+# dependencias y salidas
+node_modules/
+coverage/
+dist/
+
+# secretos y configuración local: NUNCA se suben
+.env
+.env.test
+*.env.local
+
+# sistema y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
