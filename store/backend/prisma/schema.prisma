@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(100)
+  email String @unique @db.VarChar(120)
+  passwordHash String @map("password_hash")
+  role String @db.VarChar(20) // "administrador" | "empleado"
+  phone String? @db.VarChar(10)
+  isActive Boolean @default(true) @map("is_active")
+  mustChangePassword Boolean @default(false) @map("must_change_password")
+  deactivatedAt DateTime? @map("deactivated_at")
+  createdById Int? @map("created_by_id")
+
+  createdBy User? @relation("CreatedUsers", fields: [createdById], references: [id])
+  createdUsers User[] @relation("CreatedUsers")
+
+  @@map("users")
+}
+
+model Supplier {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(100)
+  phone String? @db.VarChar(10)
+  isActive Boolean @default(true) @map("is_active")
+  products Product[]
+
+  @@map("suppliers")
+}
+
+model Product {
+  id Int @id @default(autoincrement())
+  supplierId Int? @map("supplier_id")
+  name String @db.VarChar(100)
+  brand String? @db.VarChar(50)
+  category String? @db.VarChar(50)
+  department String? @db.VarChar(50)
+  price Decimal @db.Decimal(10, 2)
+  minStock Int @default(0) @map("min_stock")
+  isActive Boolean @default(true) @map("is_active")
+  deactivationReason String? @map("deactivation_reason") @db.VarChar(50)
+  deactivatedAt DateTime? @map("deactivated_at") @db.Date
+
+  supplier Supplier? @relation(fields: [supplierId], references: [id])
+  variants Variant[]
+
+  @@map("products")
+}
+
+model Variant {
+  id Int @id @default(autoincrement())
+  productId Int @map("product_id")
+  size String  @db.VarChar(30)
+  color String  @db.VarChar(30)
+  stock Int @default(0)
+  reservedStock Int @default(0) @map("reserved_stock")
+  defectiveStock Int @default(0) @map("defective_stock")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, size, color])
+  @@map("variants")
+}
