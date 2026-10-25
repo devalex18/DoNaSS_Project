@@ -1,9 +1,9 @@
-function serializeCustomer(c) {
+function serializeCustomer(customer) {
   return {
-    id: c.id,
-    name: c.name,
-    phone: c.phone,
-    socialMediaProfile: c.socialMediaProfile ?? null,
+    id: customer.id,
+    name: customer.name,
+    phone: customer.phone,
+    socialMediaProfile: customer.socialMediaProfile ?? null,
   };
 }
 
