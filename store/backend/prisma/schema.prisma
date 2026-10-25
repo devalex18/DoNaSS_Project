@@ -68,3 +68,12 @@ model Variant {
   @@unique([productId, size, color])
   @@map("variants")
 }
+
+model Customer {
+  id Int @id @default(autoincrement())
+  name String @db.VarChar(100)
+  phone String @unique @db.VarChar(10)
+  socialMediaProfile String? @map("social_media_profile") @db.VarChar(100)
+
+  @@map("customers")
+}
