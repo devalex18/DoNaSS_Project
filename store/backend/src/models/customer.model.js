@@ -1,7 +1,10 @@
 const prisma = require('../config/db.js');
 
-const findByPhone = (phone) => prisma.customer.findUnique({ where: { phone } });
-const findById = (id) => prisma.customer.findUnique({ where: { id } });
+const findByPhone = (phone) =>
+  prisma.customer.findUnique({ where: { phone } });
+
+const findById = (id) =>
+  prisma.customer.findUnique({ where: { id } });
 
 const search = (q) =>
   prisma.customer.findMany({
@@ -16,6 +19,12 @@ const search = (q) =>
     orderBy: { name: 'asc' },
   });
 
-const create = (data) => prisma.customer.create({ data });
+const create = (data) =>
+  prisma.customer.create({ data });
 
-module.exports = { findByPhone, findById, search, create };
+module.exports = {
+  findByPhone,
+  findById,
+  search,
+  create,
+};

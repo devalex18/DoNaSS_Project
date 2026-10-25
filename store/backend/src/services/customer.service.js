@@ -5,6 +5,14 @@ async function searchCustomers(q) {
   return customerModel.search(q);
 }
 
+async function getCustomerById(id) {
+  const customer = await customerModel.findById(id);
+  if (!customer) {
+    throw httpError(404, 'Cliente no encontrado');
+  }
+  return customer;
+}
+
 async function createCustomer(data) {
   const existing = await customerModel.findByPhone(data.phone);
   if (existing) {
@@ -13,4 +21,8 @@ async function createCustomer(data) {
   return customerModel.create(data);
 }
 
-module.exports = { searchCustomers, createCustomer };
+module.exports = {
+  searchCustomers,
+  getCustomerById,
+  createCustomer,
+};

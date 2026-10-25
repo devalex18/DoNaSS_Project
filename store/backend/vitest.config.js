@@ -1,7 +1,7 @@
 const { defineConfig } = require('vitest/config');
 const dotenv = require('dotenv');
 
-dotenv.config({ path: '.env.test' });
+dotenv.config();
 
 module.exports = defineConfig({
   test: {
