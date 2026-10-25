@@ -3,11 +3,11 @@ const session = require('express-session');
 const helmet = require('helmet');
 const cors = require('cors');
 const config = require('./config');
-const { SESSION_TIMEOUT_MS } = require('./config/constants.js');
-const authRoutes = require('./routes/auth.routes.js');
-const productRoutes = require('./routes/product.routes.js');
-const errorHandler = require('./middlewares/errorHandler.js');
-const userRoutes = require('./routes/customer.routes.js');
+const { SESSION_TIMEOUT_MS } = require('./config/constants');
+const authRoutes = require('./routes/auth.routes');
+const productRoutes = require('./routes/product.routes');
+const errorHandler = require('./middlewares/errorHandler');
+
 const app = express();
 
 app.use(helmet());
@@ -36,8 +36,6 @@ app.use(
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/customers', customerRoutes);
 
 app.use(errorHandler);
 
