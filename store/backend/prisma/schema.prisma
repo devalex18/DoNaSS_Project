@@ -4,76 +4,109 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id Int @id @default(autoincrement())
-  name String @db.VarChar(100)
-  email String @unique @db.VarChar(120)
-  passwordHash String @map("password_hash")
-  role String @db.VarChar(20) // "administrador" | "empleado"
-  phone String? @db.VarChar(10)
-  isActive Boolean @default(true) @map("is_active")
-  mustChangePassword Boolean @default(false) @map("must_change_password")
-  deactivatedAt DateTime? @map("deactivated_at")
-  createdById Int? @map("created_by_id")
+  id                 Int       @id @default(autoincrement())
+  name               String    @db.VarChar(100)
+  email              String    @unique @db.VarChar(120)
+  passwordHash       String    @map("password_hash")
+  role               String    @db.VarChar(20) // "administrador" | "empleado"
+  phone              String?   @db.VarChar(10)
+  isActive           Boolean   @default(true) @map("is_active")
+  mustChangePassword Boolean   @default(false) @map("must_change_password")
+  deactivatedAt      DateTime? @map("deactivated_at")
+  createdById        Int?      @map("created_by_id")
 
-  createdBy User? @relation("CreatedUsers", fields: [createdById], references: [id])
-  createdUsers User[] @relation("CreatedUsers")
+  createdBy      User?           @relation("CreatedUsers", fields: [createdById], references: [id])
+  createdUsers   User[]          @relation("CreatedUsers")
+  priceHistory   PriceHistory[]
+  stockMovements StockMovement[]
 
   @@map("users")
 }
 
 model Supplier {
-  id Int @id @default(autoincrement())
-  name String @db.VarChar(100)
-  phone String? @db.VarChar(10)
-  isActive Boolean @default(true) @map("is_active")
+  id       Int       @id @default(autoincrement())
+  name     String    @db.VarChar(100)
+  phone    String?   @db.VarChar(10)
+  isActive Boolean   @default(true) @map("is_active")
   products Product[]
 
   @@map("suppliers")
 }
 
 model Product {
-  id Int @id @default(autoincrement())
-  supplierId Int? @map("supplier_id")
-  name String @db.VarChar(100)
-  brand String? @db.VarChar(50)
-  category String? @db.VarChar(50)
-  department String? @db.VarChar(50)
-  price Decimal @db.Decimal(10, 2)
-  minStock Int @default(0) @map("min_stock")
-  isActive Boolean @default(true) @map("is_active")
-  deactivationReason String? @map("deactivation_reason") @db.VarChar(50)
-  deactivatedAt DateTime? @map("deactivated_at") @db.Date
+  id                 Int       @id @default(autoincrement())
+  supplierId         Int?      @map("supplier_id")
+  name               String    @db.VarChar(100)
+  brand              String?   @db.VarChar(50)
+  category           String?   @db.VarChar(50)
+  department         String?   @db.VarChar(50)
+  price              Decimal   @db.Decimal(10, 2)
+  minStock           Int       @default(0) @map("min_stock")
+  isActive           Boolean   @default(true) @map("is_active")
+  deactivationReason String?   @map("deactivation_reason") @db.VarChar(50)
+  deactivatedAt      DateTime? @map("deactivated_at") @db.Date
 
-  supplier Supplier? @relation(fields: [supplierId], references: [id])
-  variants Variant[]
+  supplier     Supplier?      @relation(fields: [supplierId], references: [id])
+  variants     Variant[]
+  priceHistory PriceHistory[]
 
   @@map("products")
 }
 
 model Variant {
-  id Int @id @default(autoincrement())
-  productId Int @map("product_id")
-  size String  @db.VarChar(30)
-  color String  @db.VarChar(30)
-  stock Int @default(0)
-  reservedStock Int @default(0) @map("reserved_stock")
-  defectiveStock Int @default(0) @map("defective_stock")
+  id             Int    @id @default(autoincrement())
+  productId      Int    @map("product_id")
+  size           String @db.VarChar(30)
+  color          String @db.VarChar(30)
+  stock          Int    @default(0)
+  reservedStock  Int    @default(0) @map("reserved_stock")
+  defectiveStock Int    @default(0) @map("defective_stock")
 
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stockMovements StockMovement[]
 
   @@unique([productId, size, color])
   @@map("variants")
 }
 
 model Customer {
-  id Int @id @default(autoincrement())
-  name String @db.VarChar(100)
-  phone String @unique @db.VarChar(10)
+  id                 Int     @id @default(autoincrement())
+  name               String  @db.VarChar(100)
+  phone              String  @unique @db.VarChar(10)
   socialMediaProfile String? @map("social_media_profile") @db.VarChar(100)
 
   @@map("customers")
+}
+
+model PriceHistory {
+  id            Int      @id @default(autoincrement())
+  productId     Int      @map("product_id")
+  userId        Int?     @map("user_id")
+  previousPrice Decimal  @map("previous_price") @db.Decimal(10, 2)
+  newPrice      Decimal  @map("new_price") @db.Decimal(10, 2)
+  changedAt     DateTime @default(now()) @map("changed_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@map("price_history")
+}
+
+model StockMovement {
+  id            Int      @id @default(autoincrement())
+  variantId     Int      @map("variant_id")
+  userId        Int?     @map("user_id")
+  previousValue Int      @map("previous_value")
+  newValue      Int      @map("new_value")
+  reason        String   @default("ajuste") @db.VarChar(30) // "ajuste" | "venta" | "compra" | "cambio" | "vencimiento"
+  changedAt     DateTime @default(now()) @map("changed_at")
+
+  variant Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@map("stock_movements")
 }
