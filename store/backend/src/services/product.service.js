@@ -1,5 +1,5 @@
-const productModel = require('../models/product.model');
-const httpError = require('../config/httpError');
+const productModel = require('../models/product.model.js');
+const httpError = require('../config/httpError.js');
 
 async function createProduct(data) {
   const combinations = new Set();
@@ -19,4 +19,16 @@ async function createProduct(data) {
   return productModel.create(data);
 }
 
-module.exports = { createProduct };
+async function updateProduct(id, data, userId) {
+  const currentProduct = await productModel.findById(id);
+  if (!currentProduct) {
+    throw httpError(404, 'Producto no encontrado');
+  }
+
+  return productModel.updateWithHistory(id, currentProduct, data, userId);
+}
+
+module.exports = {
+  createProduct,
+  updateProduct,
+};
