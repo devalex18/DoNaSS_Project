@@ -12,4 +12,5 @@ module.exports = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   databaseUrl: required('DATABASE_URL'),
   frontendUrl: required('FRONTEND_URL'),
+  sessionSecret: process.env.SESSION_SECRET ?? 'dev_fallback_secret_only_for_tests',
 };
