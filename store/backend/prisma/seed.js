@@ -1,7 +1,7 @@
 require('dotenv').config();
 const bcrypt = require('bcrypt');
 const prisma = require('../src/config/db');
-const { ROLES } = require('../src/config/constants');
+const { ROLES, SECURITY } = require('../src/config/constants');
 
 async function main() {
   const email = process.env.ADMIN_EMAIL;
@@ -9,10 +9,10 @@ async function main() {
   const name = process.env.ADMIN_NAME || 'Administrador';
 
   if (!email || !password) {
-    throw new Error('Missing ADMIN_EMAIL or ADMIN_PASSWORD in environment variables');
+    throw new Error('Missing ADMIN_EMAIL or ADMIN_PASSWORD in .env');
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, SECURITY.BCRYPT_ROUNDS);
 
   const admin = await prisma.user.upsert({
     where: { email },
@@ -27,7 +27,7 @@ async function main() {
     },
   });
 
-  console.log(`Admin user ready: ${admin.email} (id: ${admin.id})`);
+  console.log(`Admin ready: ${admin.email}`);
 }
 
 main()
@@ -35,6 +35,4 @@ main()
     console.error(e);
     process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(() => prisma.$disconnect());
