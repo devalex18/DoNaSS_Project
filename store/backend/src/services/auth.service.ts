@@ -1,12 +1,13 @@
-const bcrypt = require('bcrypt');
-const userModel = require('../models/user.model.js');
-const httpError = require('../config/httpError.js');
+import bcrypt from 'bcrypt';
+import { User } from '@prisma/client';
+import { findUserByEmail } from '../models/user.model';
+import { httpError } from '../config/httpError';
 
 const GENERIC_ERROR = 'Correo o contraseña incorrectos';
 const DUMMY_HASH = '$2b$10$CwTycUXWue0Thq9StjUM0uJ8D0R6V5P5K1.eH.q0T5Y5G6uH8yK2a';
 
-async function authenticate(email, password) {
-  const user = await userModel.findByEmail(email);
+export async function authenticateUser(email: string, password: string): Promise<User> {
+  const user = await findUserByEmail(email);
 
   if (!user) {
     await bcrypt.compare(password, DUMMY_HASH);
@@ -20,5 +21,3 @@ async function authenticate(email, password) {
 
   return user;
 }
-
-module.exports = { authenticate };
