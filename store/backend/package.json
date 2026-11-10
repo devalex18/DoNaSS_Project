@@ -7,7 +7,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "tsc && node dist/server.js",
-    "db:seed": "tsc && node dist/prisma/seed.js",
+    "db:seed": "node prisma/seed.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"

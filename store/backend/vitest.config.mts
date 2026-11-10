@@ -1,21 +1,20 @@
-const { defineConfig } = require('vitest/config');
-const dotenv = require('dotenv');
+import { defineConfig } from 'vitest/config';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
-module.exports = defineConfig({
+export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    fileParallelism: false,
     coverage: {
       provider: 'v8',
       clean: false,
       reporter: ['text', 'html', 'json'],
       reportsDirectory: './coverage',
       reportOnFailure: true,
-      include: ['src/**/*.js'],
-      exclude: ['src/server.js', 'src/config/**'],
+      include: ['src/**/*.ts'],
+      exclude: ['src/server.ts', 'src/config/**', 'src/types/**'],
     },
   },
 });
