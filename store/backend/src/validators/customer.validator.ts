@@ -23,4 +23,8 @@ export const createCustomerSchema = z
   })
   .strict();
 
+<<<<<<< Updated upstream
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
+=======
+export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
+>>>>>>> Stashed changes

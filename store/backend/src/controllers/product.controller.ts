@@ -24,7 +24,11 @@ export async function update(req: Request, res: Response, next: NextFunction): P
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
+<<<<<<< Updated upstream
       throw httpError(400, 'ID de producto invalido');
+=======
+      throw httpError(400, 'ID de producto inválido');
+>>>>>>> Stashed changes
     }
     const userId = req.user ? req.user.id : null;
     const updated = await updateProduct(id, req.body, userId);

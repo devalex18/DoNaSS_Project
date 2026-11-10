@@ -12,7 +12,11 @@ import { httpError } from '../config/httpError';
 
 function parseId(raw?: string): number {
   const id = Number(raw);
+<<<<<<< Updated upstream
   if (!Number.isInteger(id) || id <= 0) throw httpError(400, 'ID de usuario invalido');
+=======
+  if (!Number.isInteger(id) || id <= 0) throw httpError(400, 'ID de usuario inválido');
+>>>>>>> Stashed changes
   return id;
 }
 
