@@ -12,13 +12,13 @@ const ROLES = {
 async function main() {
   const email = process.env.ADMIN_EMAIL;
   const password = process.env.ADMIN_PASSWORD;
-  const name = process.env.ADMIN_NAME || 'Administrador';
+  const name = process.env.ADMIN_NAME;
 
-  if (!email || !password) {
-    throw new Error('Faltan ADMIN_EMAIL o ADMIN_PASSWORD en el archivo .env');
+  if (!email || !password || !name) {
+    throw new Error('Faltan ADMIN_EMAIL, ADMIN_PASSWORD o ADMIN_NAME en el archivo .env');
   }
 
-  const bcryptRounds = Number(process.env.BCRYPT_ROUNDS ?? 10);
+  const bcryptRounds = Number(process.env.BCRYPT_ROUNDS);
   const passwordHash = await bcrypt.hash(password, bcryptRounds);
 
   const admin = await prisma.user.upsert({

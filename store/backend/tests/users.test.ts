@@ -110,7 +110,7 @@ describe('Usuarios (/api/users)', () => {
       .set('Cookie', adminCookie);
 
     expect(res.status).toBe(409);
-    expect(res.body.message).toContain('ti mismo');
+    expect(res.body.message).toContain('No puedes eliminar tu propia cuenta');
   });
 
   it('DELETE /api/users/:id realiza baja logica de un empleado (200) y PATCH /:id/reactivate lo reactiva', async () => {
