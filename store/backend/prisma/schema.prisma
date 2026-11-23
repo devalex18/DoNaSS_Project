@@ -40,6 +40,7 @@ model Supplier {
 model Product {
   id                 Int       @id @default(autoincrement())
   supplierId         Int?      @map("supplier_id")
+  sku                String    @unique @db.VarChar(50)
   name               String    @db.VarChar(100)
   brand              String?   @db.VarChar(50)
   category           String?   @db.VarChar(50)
@@ -54,6 +55,8 @@ model Product {
   variants     Variant[]
   priceHistory PriceHistory[]
 
+  @@index([isActive, department])
+  @@index([name])
   @@map("products")
 }
 
@@ -70,6 +73,8 @@ model Variant {
   stockMovements StockMovement[]
 
   @@unique([productId, size, color])
+  @@index([size, color])
+  @@index([productId])
   @@map("variants")
 }
 
