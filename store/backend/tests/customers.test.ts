@@ -115,4 +115,51 @@ describe('Clientes (/api/customers)', () => {
     expect(res.body).toHaveLength(1);
     expect(res.body[0].name).toBe('Danna Lopez');
   });
+
+  it('GET /api/customers/:id rechaza con 400 un id invalido o no positivo', async () => {
+    const empCookie = await getSessionCookie(mockEmployeeUser as any);
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockEmployeeUser as any);
+
+    const res = await request(app)
+      .get('/api/customers/0')
+      .set('Cookie', empCookie);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('GET /api/customers/:id rechaza con 404 cuando el cliente no existe', async () => {
+    const empCookie = await getSessionCookie(mockEmployeeUser as any);
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockEmployeeUser as any);
+    vi.mocked(prisma.customer.findUnique).mockResolvedValueOnce(null);
+
+    const res = await request(app)
+      .get('/api/customers/999')
+      .set('Cookie', empCookie);
+
+    expect(res.status).toBe(404);
+  });
+
+  it('GET /api/customers/:id devuelve el cliente cuando existe (200)', async () => {
+    const empCookie = await getSessionCookie(mockEmployeeUser as any);
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockEmployeeUser as any);
+    vi.mocked(prisma.customer.findUnique).mockResolvedValueOnce({
+      id: 1,
+      name: 'Danna Lopez',
+      phone: '4491234567',
+      socialMediaProfile: 'ig: @dannalopez_ags',
+      createdAt: new Date(),
+    } as any);
+
+    const res = await request(app)
+      .get('/api/customers/1')
+      .set('Cookie', empCookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id: 1,
+      name: 'Danna Lopez',
+      phone: '4491234567',
+      socialMediaProfile: 'ig: @dannalopez_ags',
+    });
+  });
 });
