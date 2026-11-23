@@ -100,4 +100,30 @@ describe('Autenticación (/api/auth)', () => {
     expect(res.status).toBe(200);
     expect(res.body.message).toBe('Sesión cerrada correctamente');
   });
+
+  it('requireAuth rechaza con 401 si el usuario de la sesión está inactivo o no existe', async () => {
+    const cookie = await getSessionCookie(mockAdminUser);
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({
+      ...mockAdminUser,
+      isActive: false,
+    } as any);
+
+    const res = await request(app)
+      .get('/api/users')
+      .set('Cookie', cookie);
+
+    expect(res.status).toBe(401);
+    expect(res.body.message).toBe('Sesión inválida o usuario inactivo');
+  });
+
+  it('requireAuth pasa el error al errorHandler (500) si falla la consulta de usuario', async () => {
+    const cookie = await getSessionCookie(mockAdminUser);
+    vi.mocked(prisma.user.findUnique).mockRejectedValueOnce(new Error('DB connection error'));
+
+    const res = await request(app)
+      .get('/api/users')
+      .set('Cookie', cookie);
+
+    expect(res.status).toBe(500);
+  });
 });

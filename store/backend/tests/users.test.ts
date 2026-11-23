@@ -33,6 +33,33 @@ describe('Usuarios (/api/users)', () => {
     expect(res.status).toBe(401);
   });
 
+  it('GET /api/users lista usuarios con filtros q y active (200)', async () => {
+    const adminCookie = await getSessionCookie(mockAdminUser);
+
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockAdminUser as any);
+    vi.mocked(prisma.user.findMany).mockResolvedValueOnce([mockEmployeeUser as any]);
+
+    const res = await request(app)
+      .get('/api/users')
+      .query({ q: 'empleado', active: 'true' })
+      .set('Cookie', adminCookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].email).toBe(mockEmployeeUser.email);
+    expect(res.body[0].passwordHash).toBeUndefined();
+    expect(prisma.user.findMany).toHaveBeenCalledWith({
+      where: {
+        isActive: true,
+        OR: [
+          { name: { contains: 'empleado', mode: 'insensitive' } },
+          { email: { contains: 'empleado', mode: 'insensitive' } },
+        ],
+      },
+      orderBy: { id: 'asc' },
+    });
+  });
+
   it('POST /api/users rechaza con 403 cuando un empleado intenta crear un usuario', async () => {
     const empCookie = await getSessionCookie(mockEmployeeUser as any);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockEmployeeUser as any);
@@ -82,6 +109,36 @@ describe('Usuarios (/api/users)', () => {
     expect(res.body.passwordHash).toBeUndefined();
   });
 
+  it('POST /api/users rechaza con 422 nombre con etiquetas HTML o rol invalido', async () => {
+    const adminCookie = await getSessionCookie(mockAdminUser);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockAdminUser as any);
+
+    const resHtml = await request(app)
+      .post('/api/users')
+      .set('Cookie', adminCookie)
+      .send({
+        name: '<script>alert(1)</script>',
+        email: 'html@donass.local',
+        password: TEST_ENV.adminPassword,
+        role: ROLES.EMPLOYEE,
+      });
+
+    const resRole = await request(app)
+      .post('/api/users')
+      .set('Cookie', adminCookie)
+      .send({
+        name: 'Usuario Rol Malo',
+        email: 'rolmalo@donass.local',
+        password: TEST_ENV.adminPassword,
+        role: 'INVITADO',
+      });
+
+    expect(resHtml.status).toBe(422);
+    expect(resHtml.body.errors.some((e: any) => e.field === 'name')).toBe(true);
+    expect(resRole.status).toBe(422);
+    expect(resRole.body.errors.some((e: any) => e.field === 'role')).toBe(true);
+  });
+
   it('POST /api/users - rechaza correo duplicado con 409', async () => {
     const adminCookie = await getSessionCookie(mockAdminUser);
     vi.mocked(prisma.user.findUnique)
@@ -101,6 +158,72 @@ describe('Usuarios (/api/users)', () => {
     expect(res.status).toBe(409);
   });
 
+  it('PATCH /api/users/:id retorna 400 si el id es invalido', async () => {
+    const adminCookie = await getSessionCookie(mockAdminUser);
+    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockAdminUser as any);
+
+    const res = await request(app)
+      .patch('/api/users/abc')
+      .set('Cookie', adminCookie)
+      .send({ name: 'Nombre Valido' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('PATCH /api/users/:id retorna 404 si el usuario no existe', async () => {
+    const adminCookie = await getSessionCookie(mockAdminUser);
+    vi.mocked(prisma.user.findUnique)
+      .mockResolvedValueOnce(mockAdminUser as any)
+      .mockResolvedValueOnce(null);
+
+    const res = await request(app)
+      .patch('/api/users/999')
+      .set('Cookie', adminCookie)
+      .send({ name: 'No Existe' });
+
+    expect(res.status).toBe(404);
+  });
+
+  it('PATCH /api/users/:id rechaza con 409 si el nuevo correo ya existe', async () => {
+    const adminCookie = await getSessionCookie(mockAdminUser);
+    vi.mocked(prisma.user.findUnique)
+      .mockResolvedValueOnce(mockAdminUser as any)
+      .mockResolvedValueOnce(mockEmployeeUser as any)
+      .mockResolvedValueOnce(mockAdminUser as any);
+
+    const res = await request(app)
+      .patch(`/api/users/${mockEmployeeUser.id}`)
+      .set('Cookie', adminCookie)
+      .send({ email: mockAdminUser.email });
+
+    expect(res.status).toBe(409);
+  });
+
+  it('PATCH /api/users/:id actualiza un usuario correctamente (200)', async () => {
+    const adminCookie = await getSessionCookie(mockAdminUser);
+    vi.mocked(prisma.user.findUnique)
+      .mockResolvedValueOnce(mockAdminUser as any)
+      .mockResolvedValueOnce(mockEmployeeUser as any)
+      .mockResolvedValueOnce(null);
+    vi.mocked(prisma.user.update).mockResolvedValueOnce({
+      ...mockEmployeeUser,
+      name: 'Empleado Actualizado',
+      email: 'actualizado@donass.local',
+    } as any);
+
+    const res = await request(app)
+      .patch(`/api/users/${mockEmployeeUser.id}`)
+      .set('Cookie', adminCookie)
+      .send({
+        name: 'Empleado Actualizado',
+        email: 'actualizado@donass.local',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.name).toBe('Empleado Actualizado');
+    expect(res.body.email).toBe('actualizado@donass.local');
+  });
+
   it('DELETE /api/users/:id impide que el administrador se de de baja a si mismo (409)', async () => {
     const adminCookie = await getSessionCookie(mockAdminUser);
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockAdminUser as any);
@@ -111,6 +234,27 @@ describe('Usuarios (/api/users)', () => {
 
     expect(res.status).toBe(409);
     expect(res.body.message).toContain('No puedes eliminar tu propia cuenta');
+  });
+
+  it('DELETE /api/users/:id impide dar de baja al ultimo administrador activo (409)', async () => {
+    const adminCookie = await getSessionCookie(mockAdminUser);
+    const anotherAdmin = {
+      ...mockAdminUser,
+      id: 99,
+      email: 'admin2@donass.local',
+    };
+
+    vi.mocked(prisma.user.findUnique)
+      .mockResolvedValueOnce(mockAdminUser as any)
+      .mockResolvedValueOnce(anotherAdmin as any);
+    vi.mocked(prisma.user.count).mockResolvedValueOnce(1);
+
+    const res = await request(app)
+      .delete(`/api/users/${anotherAdmin.id}`)
+      .set('Cookie', adminCookie);
+
+    expect(res.status).toBe(409);
+    expect(res.body.message).toContain('último administrador activo');
   });
 
   it('DELETE /api/users/:id realiza baja logica de un empleado (200) y PATCH /:id/reactivate lo reactiva', async () => {
@@ -143,9 +287,30 @@ describe('Usuarios (/api/users)', () => {
 
     const reactivateRes = await request(app)
       .patch(`/api/users/${mockEmployeeUser.id}/reactivate`)
-      .set('Cookie', adminCookie);
+      .set('Cookie', adminCookie)
+      .send({ password: TEST_ENV.adminPassword });
 
     expect(reactivateRes.status).toBe(200);
     expect(reactivateRes.body.isActive).toBe(true);
+  });
+
+  it('POST /api/users/:id/reset-password restablece la contraseña temporal (200)', async () => {
+    const adminCookie = await getSessionCookie(mockAdminUser);
+
+    vi.mocked(prisma.user.findUnique)
+      .mockResolvedValueOnce(mockAdminUser as any)
+      .mockResolvedValueOnce(mockEmployeeUser as any);
+    vi.mocked(prisma.user.update).mockResolvedValueOnce({
+      ...mockEmployeeUser,
+      mustChangePassword: true,
+    } as any);
+
+    const res = await request(app)
+      .post(`/api/users/${mockEmployeeUser.id}/reset-password`)
+      .set('Cookie', adminCookie)
+      .send({ password: TEST_ENV.adminPassword });
+
+    expect(res.status).toBe(200);
+    expect(res.body.mustChangePassword).toBe(true);
   });
 });
